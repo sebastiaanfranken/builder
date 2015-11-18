@@ -1,0 +1,17 @@
+{
+	"log": {
+		"show_all": {
+			"label": "Toon alle items",
+			"type": "boolean"
+		},
+		"sorting_field": {
+			"label": "Logboek sorteren",
+			"type": "select",
+			"default": "action",
+			"values": {
+				"created_at": "Datum",
+				"action": "Actie"
+			}
+		}
+	}
+}

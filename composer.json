@@ -1,0 +1,18 @@
+{
+	"name": "sfranken/builder",
+	"description": "A PHP library to translate a JSON file into HTML",
+	"require": {
+		"php": ">=5.4.0"
+	},
+	"autoload": {
+		"classmap": [
+			"src/"
+		]
+	},
+	"authors": [
+		{
+			"name": "Sebastiaan Franken",
+			"email": "sebastiaan@sebastiaanfranken.nl"
+		}
+	]
+}
