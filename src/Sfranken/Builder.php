@@ -1,23 +1,56 @@
 <?php
 namespace Sfranken;
 
+/**
+ * A PHP class to generate HTML fields (with Semantic-UI specific HTML markup)
+ * from JSON files or a database.
+ *
+ * @author Sebastiaan Franken <sebastiaan@sebastiaanfranken.nl>
+ */
+
 use DOMDocument;
 use DOMElement;
 
 class Builder
 {
+
+	/**
+	 * The raw JSON preferences object
+	 *
+	 * @var object
+	 * @access protected
+	 */
 	protected $preferences;
 
+	/**
+	 * The constructor takes care of loading the preferences (in a JSON format)
+	 * into the global $preferences object.
+	 *
+	 * @param string $preferences The users' preferences in JSON format
+	 * @return void
+	 */
 	public function __construct($preferences)
 	{
 		$this->preferences = json_decode($preferences);
 	}
 
+	/**
+	 * Getter for the class preferences property
+	 *
+	 * @return stdClass
+	 */
 	public function preferences()
 	{
 		return $this->preferences;
 	}
 
+	/**
+	 * Get a specific key from the class collection property if it exists.
+	 * If it doesn't it'll return the current class instance.
+	 *
+	 * @param string $collection The collection key to check for
+	 * @return mixed
+	 */
 	public function getCollection($collection)
 	{
 		if(property_exists($this->preferences, $collection))
@@ -30,6 +63,12 @@ class Builder
 		return $this;
 	}
 
+	/**
+	 * Transforms the preferences object into HTML with a Semantic-UI specific
+	 * syntax based on a ruleset found in a JSON file
+	 *
+	 * @return mixed
+	 */
 	public function build()
 	{
 		if(is_object($this->preferences) && count($this->preferences) > 0)
