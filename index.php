@@ -41,11 +41,18 @@ spl_autoload_register(function($class) {
 });
 
 /*
+ * Mock user defined settings
+ */
+$user = [
+	'show_all' => false
+];
+
+/*
  * Create a new Builder instance and load the JSON file (hyve) into
  * it ...
  */
 $log =  file_get_contents('example.json');
-$builder = (new Sfranken\Builder($log))->getCollection('log');
+$builder = (new Sfranken\Builder($log, $user))->getCollection('log');
 
 /*
  * ... Print the instance as HTML

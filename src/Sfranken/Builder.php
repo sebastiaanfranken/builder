@@ -72,7 +72,7 @@ class Builder
 		{
 			$return = json_encode($this->preferences->$collection);
 
-			return new Builder($return);
+			return is_null($this->model) ? new Builder($return) : new Builder($return, $this->model);
 		}
 
 		return $this;
@@ -115,7 +115,19 @@ class Builder
 						$select->appendChild($no);
 						$no->setAttribute('value', 'false');
 
-						if(property_exists($preferences, 'default'))
+						//if(property_exists($preferences, 'default'))
+						if(is_array($this->model) && array_key_exists($key, $this->model))
+						{
+							if($this->model[$key] === true)
+							{
+								$yes->setAttribute('selected', 'selected');
+							}
+							else
+							{
+								$no->setAttribute('selected', 'selected');
+							}
+						}
+						elseif(!array_key_exists($key, $this->model) && property_exists($preferences, 'default'))
 						{
 							if($preferences->default == true)
 							{
@@ -139,7 +151,7 @@ class Builder
 							{
 								$option->setAttribute('selected', 'selected');
 							}
-							elseif(property_exists($preferences, 'default') && $preferences->default == $value)
+							elseif(!array_key_exists($key, $this->model) && property_exists($preferences, 'default') && $preferences->default == $value)
 							{
 								$option->setAttribute('selected', 'selected');
 							}
