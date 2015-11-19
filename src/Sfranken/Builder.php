@@ -117,7 +117,16 @@ class Builder
 
 						if(is_array($this->model) && array_key_exists($key, $this->model))
 						{
-							if($this->model[$key] == true)
+							/*
+							 * Watch out for this one:
+							 * My database stores booleans as strings, because the field
+							 * type is "varchar". So, false literally becomes "false"
+							 * (as in the English word)..
+							 *
+							 * So, instead of comparing for a boolean we also have to check
+							 * for a string.
+							 */
+							if($this->model[$key] == true || $this->model[$key] == 'true')
 							{
 								$yes->setAttribute('selected', 'selected');
 							}
