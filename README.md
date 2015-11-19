@@ -6,14 +6,18 @@ usable HTML code with a _specific_ HTML structure (Semantic-UI).
 ## Howto
 
 	<?php
-	$file = file_get_contents('path/to/your/file.json');
-	$builder = new Sfranken\Builder($file);
+	$primary = ['option name' => 'password'];
+	$secondary = json_decode(file_get_contents('file.json'), true);
+
+	$builder = new Sfranken\Builder();
+	$builder->setPrimary($primary);
+	$builder->setSecondary($secondary);
 
 	$settings = $builder->getCollection('user');
 
 	print $settings->build();
 
-Where the contents of _path/to/your/file.json_ would look like this:
+Where the contents of _file.json_ would look like this:
 
 	{
 		"user": {

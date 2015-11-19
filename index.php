@@ -59,8 +59,6 @@ $builder->setPrimary($user);
 $builder->setSecondary($secondary);
 $builder = $builder->getCollection('log');
 
-print pr($builder);
-
 /*
  * ... Print the instance as HTML
  */
