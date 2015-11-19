@@ -23,15 +23,30 @@ class Builder
 	protected $preferences;
 
 	/**
+	 * The database model (Eloquent for now, so Laravel only)
+	 * to use as a data source
+	 *
+	 * @var array
+	 * @access protected
+	 */
+	protected $model;
+
+	/**
 	 * The constructor takes care of loading the preferences (in a JSON format)
 	 * into the global $preferences object.
 	 *
 	 * @param string $preferences The users' preferences in JSON format
+	 * @param array $model The model to use
 	 * @return void
 	 */
-	public function __construct($preferences)
+	public function __construct($preferences, array $model = array())
 	{
 		$this->preferences = json_decode($preferences);
+
+		if(count($model) > 0)
+		{
+			$this->model = $model;
+		}
 	}
 
 	/**
@@ -120,7 +135,11 @@ class Builder
 							$select->appendChild($option);
 							$option->setAttribute('value', $value);
 
-							if(property_exists($preferences, 'default') && $preferences->default == $value)
+							if(array_key_exists($key, $this->model) && $this->model[$key] == $value)
+							{
+								$option->setAttribute('selected', 'selected');
+							}
+							elseif(property_exists($preferences, 'default') && $preferences->default == $value)
 							{
 								$option->setAttribute('selected', 'selected');
 							}
