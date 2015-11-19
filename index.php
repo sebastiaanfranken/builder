@@ -51,8 +51,15 @@ $user = [
  * Create a new Builder instance and load the JSON file (hyve) into
  * it ...
  */
-$log =  file_get_contents('example.json');
-$builder = (new Sfranken\Builder($log, $user))->getCollection('log');
+$log = file_get_contents('example.json');
+$secondary = json_decode($log, true);
+
+$builder = new Sfranken\Builder();
+$builder->setPrimary($user);
+$builder->setSecondary($secondary);
+$builder = $builder->getCollection('log');
+
+print pr($builder);
 
 /*
  * ... Print the instance as HTML

@@ -2,8 +2,7 @@
 namespace Sfranken;
 
 /**
- * A PHP class to generate HTML fields (with Semantic-UI specific HTML markup)
- * from JSON files or a database.
+ * A PHP class to generate HTML from two possible datasets
  *
  * @author Sebastiaan Franken <sebastiaan@sebastiaanfranken.nl>
  */
@@ -13,98 +12,149 @@ use DOMElement;
 
 class Builder
 {
-
 	/**
-	 * The raw JSON preferences object
-	 *
-	 * @var object
-	 * @access protected
-	 */
-	protected $preferences;
-
-	/**
-	 * The database model (Eloquent for now, so Laravel only)
-	 * to use as a data source
+	 * The primary dataset. This is usually fed from
+	 * a database
 	 *
 	 * @var array
-	 * @access protected
 	 */
-	protected $model;
+	protected $primary = [];
 
 	/**
-	 * The constructor takes care of loading the preferences (in a JSON format)
-	 * into the global $preferences object.
+	 * The secondary dataset. This is usually fed from
+	 * a JSON file
 	 *
-	 * @param string $preferences The users' preferences in JSON format
-	 * @param array $model The model to use
+	 * @var array
+	 */
+	protected $secondary = [];
+
+	/**
+	 * Resets the primary and secondary datasets to be empty arrays
+	 *
 	 * @return void
 	 */
-	public function __construct($preferences, $model = null)
+	public function __construct()
 	{
-		$this->preferences = json_decode($preferences);
-
-		if(!is_null($model))
-		{
-			$this->model = $model;
-		}
+		$this->primary = [];
+		$this->secondary = [];
 	}
 
 	/**
-	 * Getter for the class preferences property
+	 * Getter for the primary dataset
 	 *
-	 * @return stdClass
+	 * @return array
 	 */
-	public function preferences()
+	public function getPrimary()
 	{
-		return $this->preferences;
+		return $this->primary;
 	}
 
 	/**
-	 * Get a specific key from the class collection property if it exists.
-	 * If it doesn't it'll return the current class instance.
+	 * Setter for the primary dataset
 	 *
-	 * @param string $collection The collection key to check for
+	 * @param array $primary The new primary dataset
+	 * @return Builder
+	 */
+	public function setPrimary(array $primary = array())
+	{
+		$this->primary = $primary;
+		return $this;
+	}
+
+	/**
+	 * Getter for the secondary dataset
+	 *
+	 * @return array
+	 */
+	public function getSecondary()
+	{
+		return $this->secondary;
+	}
+
+	/**
+	 * Setter for the secondary dataset
+	 *
+	 * @param array $secondary The secondary dataset
+	 * @return Builder
+	 */
+	public function setSecondary(array $secondary = array())
+	{
+		$this->secondary = $secondary;
+		return $this;
+	}
+
+	/**
+	 * Get a "collection" from the secondary
+	 * datasets if it exists.
+	 *
+	 * If it doesn't it'll return the current class instance
+	 *
+	 * @param string $collection The collection to check for/return
 	 * @return mixed
 	 */
 	public function getCollection($collection)
 	{
-		if(property_exists($this->preferences, $collection))
+		if(array_key_exists($collection, $this->secondary))
 		{
-			$return = json_encode($this->preferences->$collection);
+			$primary = $this->getPrimary();
+			$secondary = $this->getSecondary();
 
-			return is_null($this->model) ? new Builder($return) : new Builder($return, $this->model);
+			if(array_key_exists($collection, $secondary))
+			{
+				$secondary = $secondary[$collection];
+			}
+
+			$builder = new Builder();
+			$builder->setPrimary($primary);
+			$builder->setSecondary($secondary);
+
+			return $builder;
 		}
 
 		return $this;
 	}
 
 	/**
-	 * Transforms the preferences object into HTML with a Semantic-UI specific
-	 * syntax based on a ruleset found in a JSON file
+	 * Transform both datasets into HTML with Semantic-UI syntax
 	 *
 	 * @return mixed
 	 */
 	public function build()
 	{
-		if(is_object($this->preferences) && count($this->preferences) > 0)
+		if(is_array($this->getSecondary()) && count($this->getSecondary()) > 0)
 		{
 			$dom = new DOMDocument('1.0', 'utf-8');
+			$primary = $this->getPrimary();
+			$secondary = $this->getSecondary();
 
-			foreach($this->preferences as $key => $preferences)
+			foreach($secondary as $key => $preferences)
 			{
+				/*
+				 * Create the div the field will be appended into
+				 */
 				$div = new DOMElement('div');
 				$dom->appendChild($div);
 				$div->setAttribute('class', 'field');
 
-				$label = new DOMElement('label', $preferences->label);
+				/*
+				 * Create the label for the field
+				 */
+				$label = new DOMElement('label', $preferences['label']);
 				$div->appendChild($label);
 				$label->setAttribute('for', $key);
 
+				/*
+				 * Create the select HTML element
+				 */
 				$select = new DOMElement('select');
 				$div->appendChild($select);
 				$select->setAttribute('name', $key);
 
-				switch($preferences->type)
+				/*
+				 * Loop over the possible fieldtypes and
+				 * apply logic accordingly
+				 */
+				switch($preferences['type'])
 				{
 					case "boolean":
 						$yes = new DOMElement('option', 'Ja');
@@ -115,7 +165,7 @@ class Builder
 						$select->appendChild($no);
 						$no->setAttribute('value', 'false');
 
-						if(is_array($this->model) && array_key_exists($key, $this->model))
+						if(array_key_exists($key, $primary))
 						{
 							/*
 							 * Watch out for this one:
@@ -126,7 +176,7 @@ class Builder
 							 * So, instead of comparing for a boolean we have to check
 							 * for a string.
 							 */
-							if($this->model[$key] == 'true')
+							if($primary[$key] == "true")
 							{
 								$yes->setAttribute('selected', 'selected');
 							}
@@ -135,9 +185,9 @@ class Builder
 								$no->setAttribute('selected', 'selected');
 							}
 						}
-						elseif(!array_key_exists($key, $this->model) && property_exists($preferences, 'default'))
+						elseif(!array_key_exists($key, $primary) && array_key_exists('default', $preferences))
 						{
-							if($preferences->default == true)
+							if($preferences['default'] == true)
 							{
 								$yes->setAttribute('selected', 'selected');
 							}
@@ -157,9 +207,9 @@ class Builder
 						$select->appendChild($desc);
 						$desc->setAttribute('value', 'desc');
 
-						if( (is_array($this->model) && array_key_exists($key, $this->model)) || (!array_key_exists($key, $this->model) && property_exists($preferences, 'default')) )
+						if(array_key_exists($key, $primary) || (!array_key_exists($key, $primary) && array_key_exists('default', $preferences)))
 						{
-							if($this->model[$key] == 'asc')
+							if($primary[$key] == "asc")
 							{
 								$asc->setAttribute('selected', 'selected');
 							}
@@ -171,17 +221,13 @@ class Builder
 					break;
 
 					case "select":
-						foreach($preferences->values as $value => $label)
+						foreach($preferences['values'] as $value => $label)
 						{
 							$option = new DOMElement('option', $label);
 							$select->appendChild($option);
 							$option->setAttribute('value', $value);
 
-							if(is_array($this->model) && array_key_exists($key, $this->model) && $this->model[$key] == $value)
-							{
-								$option->setAttribute('selected', 'selected');
-							}
-							elseif(!array_key_exists($key, $this->model) && property_exists($preferences, 'default') && $preferences->default == $value)
+							if((array_key_exists($key, $primary) && $primary[$key] == $value) || (!array_key_exists($key, $primary) && array_key_exists('default', $preferences) && $preferences['default'] == $value))
 							{
 								$option->setAttribute('selected', 'selected');
 							}
