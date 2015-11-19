@@ -115,7 +115,6 @@ class Builder
 						$select->appendChild($no);
 						$no->setAttribute('value', 'false');
 
-						//if(property_exists($preferences, 'default'))
 						if(is_array($this->model) && array_key_exists($key, $this->model))
 						{
 							if($this->model[$key] === true)
@@ -136,6 +135,28 @@ class Builder
 							else
 							{
 								$no->setAttribute('selected', 'selected');
+							}
+						}
+					break;
+
+					case "sort":
+						$asc = new DOMElement('option', 'Oplopend');
+						$select->appendChild($asc);
+						$asc->setAttribute('value', 'asc');
+
+						$desc = new DOMElement('option', 'Aflopend');
+						$select->appendChild($desc);
+						$desc->setAttribute('value', 'desc');
+
+						if( (is_array($this->model) && array_key_exists($key, $this->model)) || (!array_key_exists($key, $this->model) && property_exists($preferences, 'default')) )
+						{
+							if($this->model[$key] == 'asc')
+							{
+								$asc->setAttribute('selected', 'selected');
+							}
+							else
+							{
+								$desc->setAttribute('selected', 'selected');
 							}
 						}
 					break;
