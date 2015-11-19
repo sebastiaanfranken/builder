@@ -39,11 +39,11 @@ class Builder
 	 * @param array $model The model to use
 	 * @return void
 	 */
-	public function __construct($preferences, array $model = array())
+	public function __construct($preferences, $model = null)
 	{
 		$this->preferences = json_decode($preferences);
 
-		if(count($model) > 0)
+		if(!is_null($model))
 		{
 			$this->model = $model;
 		}
