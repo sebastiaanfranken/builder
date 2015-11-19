@@ -123,10 +123,10 @@ class Builder
 							 * type is "varchar". So, false literally becomes "false"
 							 * (as in the English word)..
 							 *
-							 * So, instead of comparing for a boolean we also have to check
+							 * So, instead of comparing for a boolean we have to check
 							 * for a string.
 							 */
-							if($this->model[$key] == true || $this->model[$key] == 'true')
+							if($this->model[$key] == 'true')
 							{
 								$yes->setAttribute('selected', 'selected');
 							}
