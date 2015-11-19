@@ -135,7 +135,7 @@ class Builder
 							$select->appendChild($option);
 							$option->setAttribute('value', $value);
 
-							if(array_key_exists($key, $this->model) && $this->model[$key] == $value)
+							if(is_array($this->model) && array_key_exists($key, $this->model) && $this->model[$key] == $value)
 							{
 								$option->setAttribute('selected', 'selected');
 							}
