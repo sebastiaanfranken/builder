@@ -117,7 +117,7 @@ class Builder
 
 						if(is_array($this->model) && array_key_exists($key, $this->model))
 						{
-							if($this->model[$key] === true)
+							if($this->model[$key] == true)
 							{
 								$yes->setAttribute('selected', 'selected');
 							}
