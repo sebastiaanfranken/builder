@@ -211,11 +211,9 @@ class Builder
 					break;
 				}
 			}
-
-			return $this->dom->saveHTML();
 		}
 
-		return false;
+		return $this->dom->saveHTML();
 	}
 
 	/**
