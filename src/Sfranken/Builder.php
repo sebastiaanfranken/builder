@@ -29,6 +29,20 @@ class Builder
 	protected $secondary = [];
 
 	/**
+	 * The DOMDocument instance
+	 *
+	 * @var DOMDocument
+	 */
+	protected $dom;
+
+	/**
+	 * DOM Elements that are get or set anonymously
+	 *
+	 * @var array
+	 */
+	protected $elements = [];
+
+	/**
 	 * Resets the primary and secondary datasets to be empty arrays
 	 *
 	 * @return void
@@ -37,6 +51,31 @@ class Builder
 	{
 		$this->primary = [];
 		$this->secondary = [];
+		$this->dom = new DOMDocument();
+	}
+
+	/**
+	 * Magic getter for DOM elements
+	 *
+	 * @param string $element The element to get
+	 * @return DOMElement
+	 */
+	public function __get($element)
+	{
+		return $this->elements[$element];
+	}
+
+	/**
+	 * Magic setter for DOM elements
+	 *
+	 * @param string $key The elements name
+	 * @param DOMElement $element The actual element
+	 * @return Builder
+	 */
+	public function __set($key, $element)
+	{
+		$this->elements[$key] = $element;
+		return $this;
 	}
 
 	/**
@@ -115,130 +154,184 @@ class Builder
 	}
 
 	/**
+	 * Gets a specific HTML element from the elements array if it exists.
+	 *
+	 * @param string $tag The tagname, can be "div", "select" or any other valid tag
+	 * @param string $name The elements name. Is combined with the tag
+	 * @return string|false
+	 */
+	protected function getElement($tag, $name)
+	{
+		$element = $name . "_" . $tag;
+
+		return array_key_exists($element, $this->elements) ? $this->elements[$element] : false;
+	}
+
+	/**
 	 * Transform both datasets into HTML with Semantic-UI syntax
 	 *
 	 * @return mixed
 	 */
 	public function build()
 	{
-		if(is_array($this->getSecondary()) && count($this->getSecondary()) > 0)
-		{
-			$dom = new DOMDocument('1.0', 'utf-8');
-			$primary = $this->getPrimary();
-			$secondary = $this->getSecondary();
+		$primary = $this->getPrimary();
+		$secondary = $this->getSecondary();
 
+		if(is_array($secondary) && count($secondary) > 0)
+		{
 			foreach($secondary as $key => $preferences)
 			{
-				/*
-				 * Create the div the field will be appended into
-				 */
-				$div = new DOMElement('div');
-				$dom->appendChild($div);
-				$div->setAttribute('class', 'field');
+				$name = $key . "_div";
+				$div = $this->$name = new DOMElement("div");
+				$this->dom->appendChild($div);
+				$div->setAttribute("class", "field");
 
-				/*
-				 * Create the label for the field
-				 */
-				$label = new DOMElement('label', $preferences['label']);
-				$div->appendChild($label);
-				$label->setAttribute('for', $key);
+				$name = $key . "_label";
+				$label = $this->$name = new DOMElement("label", $preferences["label"]);
+				$this->dom->appendChild($label);
+				$label->setAttribute("for", $key);
 
-				/*
-				 * Create the select HTML element
-				 */
-				$select = new DOMElement('select');
-				$div->appendChild($select);
-				$select->setAttribute('name', $key);
+				$name = $key . "_select";
+				$select = $this->$name = new DOMElement("select");
+				$this->dom->appendChild($select);
+				$select->setAttribute("name", $key);
 
-				/*
-				 * Loop over the possible fieldtypes and
-				 * apply logic accordingly
-				 */
-				switch($preferences['type'])
+				switch($preferences["type"])
 				{
 					case "boolean":
-						$yes = new DOMElement('option', 'Ja');
-						$select->appendChild($yes);
-						$yes->setAttribute('value', 'true');
-
-						$no = new DOMElement('option', 'Nee');
-						$select->appendChild($no);
-						$no->setAttribute('value', 'false');
-
-						if(array_key_exists($key, $primary))
-						{
-							/*
-							 * Watch out for this one:
-							 * My database stores booleans as strings, because the field
-							 * type is "varchar". So, false literally becomes "false"
-							 * (as in the English word)..
-							 *
-							 * So, instead of comparing for a boolean we have to check
-							 * for a string.
-							 */
-							if($primary[$key] == "true")
-							{
-								$yes->setAttribute('selected', 'selected');
-							}
-							else
-							{
-								$no->setAttribute('selected', 'selected');
-							}
-						}
-						elseif(!array_key_exists($key, $primary) && array_key_exists('default', $preferences))
-						{
-							if($preferences['default'] == true)
-							{
-								$yes->setAttribute('selected', 'selected');
-							}
-							else
-							{
-								$no->setAttribute('selected', 'selected');
-							}
-						}
+						$this->buildBoolean($key, $preferences);
 					break;
 
 					case "sort":
-						$asc = new DOMElement('option', 'Oplopend');
-						$select->appendChild($asc);
-						$asc->setAttribute('value', 'asc');
-
-						$desc = new DOMElement('option', 'Aflopend');
-						$select->appendChild($desc);
-						$desc->setAttribute('value', 'desc');
-
-						if(array_key_exists($key, $primary) || (!array_key_exists($key, $primary) && array_key_exists('default', $preferences)))
-						{
-							if($primary[$key] == "asc")
-							{
-								$asc->setAttribute('selected', 'selected');
-							}
-							else
-							{
-								$desc->setAttribute('selected', 'selected');
-							}
-						}
+						$this->buildSort($key, $preferences);
 					break;
 
 					case "select":
-						foreach($preferences['values'] as $value => $label)
-						{
-							$option = new DOMElement('option', $label);
-							$select->appendChild($option);
-							$option->setAttribute('value', $value);
-
-							if((array_key_exists($key, $primary) && $primary[$key] == $value) || (!array_key_exists($key, $primary) && array_key_exists('default', $preferences) && $preferences['default'] == $value))
-							{
-								$option->setAttribute('selected', 'selected');
-							}
-						}
+						$this->buildSelect($key, $preferences);
 					break;
 				}
 			}
 
-			return $dom->saveHTML();
+			return $this->dom->saveHTML();
 		}
 
 		return false;
+	}
+
+	/**
+	 * Builds the HTML for the boolean type fields
+	 *
+	 * @param string $key The HTML name (key)
+	 * @param array $preferences The preferences carried over from build()
+	 * @see build()
+	 * @see getElement()
+	 * @return void
+	 */
+	private function buildBoolean($key, array $preferences)
+	{
+		$primary = $this->getPrimary();
+		$select = $this->getElement("select", $key);
+
+		$yes = new DOMElement("option", "Ja");
+		$select->appendChild($yes);
+		$yes->setAttribute("value", "true");
+
+		$no = new DOMElement("option", "Nee");
+		$select->appendChild($no);
+		$no->setAttribute("value", "false");
+
+		if(array_key_exists($key, $primary))
+		{
+			/*
+			 * Watch out for this one:
+			 * The database stores booleans as strings, becasue the field
+			 * type is "varchar", so boolean false literally becomes
+			 * "false".
+			 *
+			 * So, instead of comparing for a boolean we have to check for
+			 * a string
+			 */
+			if($primary[$key] == "true")
+			{
+				$yes->setAttribute("selected", "selected");
+			}
+			else
+			{
+				$no->setAttribute("selected", "selected");
+			}
+		}
+		elseif(!array_key_exists($key, $primary) && array_key_exists("default", $primary))
+		{
+			if($preferences["default"] == true)
+			{
+				$yes->setAttribute("selected", "selected");
+			}
+			else
+			{
+				$no->setAttribute("selected", "selected");
+			}
+		}
+	}
+
+	/**
+	 * Builds the HTML for the fields with the sort type
+	 *
+	 * @param string $key
+	 * @param array $preferences The preferences, taken from build()
+	 * @see build()
+	 * @see getElement()
+	 * @return void
+	 */
+	private function buildSort($key, array $preferences)
+	{
+		$primary = $this->getPrimary();
+		$select = $this->getElement("select", $key);
+
+		$asc = new DOMElement("option", "Oplopend");
+		$select->appendChild($asc);
+		$asc->setAttribute("value", "asc");
+
+		$desc = new DOMElement("option", "Aflopend");
+		$select->appendChild($desc);
+		$desc->setAttribute("value", "desc");
+
+		if(array_key_exists($key, $primary) || (!array_key_exists($key, $primary) && array_key_exists("default", $preferences)))
+		{
+			if($primary[$key] == "asc")
+			{
+				$asc->setAttribute("selected", "selected");
+			}
+			else
+			{
+				$desc->setAttribute("selected", "selected");
+			}
+		}
+	}
+
+	/**
+	 * Builds the HTML for the fields with the "select" type
+	 *
+	 * @param string $key
+	 * @param array $preferences The preferences, passed on in build()
+	 * @see build()
+	 * @see getElement()
+	 * @return void
+	 */
+	private function buildSelect($key, array $preferences)
+	{
+		$select = $this->getElement("select", $key);
+		$primary = $this->getPrimary();
+
+		foreach($preferences["values"] as $value => $label)
+		{
+			$option = new DOMElement("option", $label);
+			$select->appendChild($option);
+			$option->setAttribute("value", $value);
+
+			if((array_key_exists($key, $primary) && $primary[$key] == $value) || (!array_key_exists($key, $primary) && array_key_exists('default', $preferences) && $preferences['default'] == $value))
+			{
+				$option->setAttribute("selected", "selected");
+			}
+		}
 	}
 }
