@@ -177,7 +177,7 @@ class Builder
 		$primary = $this->getPrimary();
 		$secondary = $this->getSecondary();
 
-		if(is_array($secondary) && count($secondary) > 0)
+		if((is_array($primary) && count($primary) > 0) || (is_array($secondary) && count($secondary) > 0))
 		{
 			foreach($secondary as $key => $preferences)
 			{
@@ -211,9 +211,11 @@ class Builder
 					break;
 				}
 			}
+
+			return $this->dom->saveHTML();
 		}
 
-		return $this->dom->saveHTML();
+		return false;
 	}
 
 	/**
