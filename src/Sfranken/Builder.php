@@ -260,7 +260,7 @@ class Builder
 				$no->setAttribute("selected", "selected");
 			}
 		}
-		elseif(!array_key_exists($key, $primary) && array_key_exists("default", $primary))
+		elseif(!array_key_exists($key, $primary) && array_key_exists("default", $preferences))
 		{
 			if($preferences["default"] == true)
 			{
