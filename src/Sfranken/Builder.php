@@ -168,7 +168,8 @@ class Builder
 	}
 
 	/**
-	 * Transform both datasets into HTML with Semantic-UI syntax
+	 * Transform both datasets into HTML with Semantic-UI syntax,
+	 * also based on the "can" preference
 	 *
 	 * @return mixed
 	 */
