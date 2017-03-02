@@ -182,7 +182,7 @@ class Builder
 		{
 			foreach($secondary as $key => $preferences)
 			{
-				if(Auth::user()->can($preferences["can"]))
+				if(\Auth::user()->can($preferences["can"]))
 				{
 					$name = $key . "_div";
 					$div = $this->$name = new DOMElement("div");
