@@ -196,6 +196,21 @@ class Builder
 				$select->setAttribute('name', $key);
 				$div->appendChild($select);
 
+				switch($preferences['type'])
+				{
+					case 'boolean':
+						$this->buildBoolean($key, $preferences);
+					break;
+
+					case 'sort':
+						$this->buildSort($key, $preferences);
+					break;
+
+					case 'select':
+						$this->buildSelect($key, $preferences);
+					break;
+				}
+
 				if(array_key_exists('can', $preferences) == false || \Auth::user()->can($preferences['can']))
 				{
 					$this->dom->appendChild($div);
