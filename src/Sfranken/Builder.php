@@ -182,40 +182,25 @@ class Builder
 		{
 			foreach($secondary as $key => $preferences)
 			{
-				$can = array_key_exists('can', $preferences) ? $preferences['can'] : true;
-				
-				if(\Auth::user()->can($can))
+				$name = $key . '_div';
+				$div = $this->{$name} = $this->dom->createElement('div');
+				$div->setAttribute('class', 'field');
+
+				$name = $key . '_label';
+				$label = $this->{$name} = $this->dom->createElement('label', $preferences['label']);
+				$label->setAttribute('for', $key);
+				$div->appendChild($label);
+
+				$name = $key . '_select';
+				$select = $this->{$name} = $this->dom->createElement('select');
+				$select->setAttribute('name', $key);
+				$div->appendChild($select);
+
+				if(array_key_exists('can', $preferences) == false || \Auth::user()->can($preferences['can']))
 				{
-					$name = $key . "_div";
-					$div = $this->$name = new DOMElement("div");
 					$this->dom->appendChild($div);
-					$div->setAttribute("class", "field");
-
-					$name = $key . "_label";
-					$label = $this->$name = new DOMElement("label", $preferences["label"]);
-					$this->dom->appendChild($label);
-					$label->setAttribute("for", $key);
-
-					$name = $key . "_select";
-					$select = $this->$name = new DOMElement("select");
-					$this->dom->appendChild($select);
-					$select->setAttribute("name", $key);
-
-					switch($preferences["type"])
-					{
-						case "boolean":
-							$this->buildBoolean($key, $preferences);
-						break;
-
-						case "sort":
-							$this->buildSort($key, $preferences);
-						break;
-
-						case "select":
-							$this->buildSelect($key, $preferences);
-						break;
-					}
 				}
+
 			}
 
 			return $this->dom->saveHTML();
