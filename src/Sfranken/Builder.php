@@ -4,7 +4,7 @@ namespace Sfranken;
 /**
  * A PHP class to generate HTML from two possible datasets
  *
- * @author Sebastiaan Franken <sebastiaan@sebastiaanfranken.nl>
+ * @author Sebastiaan Franken
  */
 
 use DOMDocument;
